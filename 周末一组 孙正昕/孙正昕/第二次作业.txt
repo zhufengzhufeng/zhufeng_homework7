@@ -1,0 +1,9 @@
+function copy(source,target){
+    fs.readFile(source,'utf8',function(err,data){
+        if(err) return console.log(err);
+        fs.writeFile(target,data,function(err){
+            if(err)return console.log(err);
+            console.log('copy success!’);
+        })
+    });
+}
