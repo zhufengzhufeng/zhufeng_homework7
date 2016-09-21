@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="bootstrap.css">
+    <style>
+        body{
+            position: relative;
+        }
+        #layoutwindow{
+            display: none;
+            border: 1px solid lightgrey;
+            padding: 10px;
+            height: 200px;
+            width: 400px;
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            margin-left: -200px;
+            z-index: 10;
+            background-color: white;
+        }
+        #layoutwindow2{
+            display: none;
+            border: 1px solid lightgrey;
+            padding: 10px;
+            height: 300px;
+            width: 400px;
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            margin-left: -200px;
+            z-index: 10;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="container"><table class="table">
+    <thead>
+    <tr>
+        <th>书名</th>
+        <th>价格</th>
+        <th>数量</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody id="content">
+
+    </tbody>
+</table>
+<button type="button" class="btn btn-primary" id="btn_add" onclick="layoutwindow.style.display='block'">增加书籍</button>
+<div id="layoutwindow">
+    <form id="myform">
+        <div class="form-group">
+            <label for="bookname" class="control-label">书名</label>
+            <input type="text" class="form-control" name="bookname" id="bookname">
+        </div>
+        <div class="form-group">
+            <label for="bookprice" class="control-label">价格</label>
+            <input type="text" class="form-control" name="bookprice" id="bookprice">
+        </div>
+        <div class="form-group">
+            <button id="btn" type="button" class="btn btn-primary">添加</button>
+        </div>
+    </form>
+</div>
+<div id="layoutwindow2">
+    <form id="myform2">
+        <div class="form-group">
+            <label for="bookid" class="control-label">ID</label>
+            <input type="text" class="form-control" name="bookid" id="bookid">
+        </div>
+        <div class="form-group">
+            <label for="bookname2" class="control-label">书名</label>
+            <input type="text" class="form-control" name="bookname2" id="bookname2">
+        </div>
+        <div class="form-group">
+            <label for="bookprice" class="control-label">价格</label>
+            <input type="text" class="form-control" name="bookprice2" id="bookprice2">
+        </div>
+        <div class="form-group">
+            <button id="updateBtn" type="button" class="btn btn-primary" onclick="update.call(this)">修改</button>
+        </div>
+    </form>
+</div>
+</div>
+<script type="text/javascript">
+    function bindHTML(){
+        //初始获取当前页面的信息
+        var xhr=new XMLHttpRequest();
+        xhr.open('GET','/book',true);
+        xhr.responseType='json';
+        xhr.onload=function(){
+            var data=xhr.response;
+            console.log(data);
+            var str='';
+            data.forEach(function(item,index){
+                str+=`<tr><td>${item.bookname}</td><td>${item.bookprice}</td><td><input type="text" value="1"/></td><td><button type="button" class="btn btn-primary" onclick="getData.call(this,${item.id})" id="upBtn">修改</button><button type="button"class="btn btn-danger" onclick="myremove.call(this,${item.id})">删除</button></td></tr>`;
+            });
+            content.innerHTML=str;
+        };
+        xhr.send();
+    }
+    bindHTML();
+    btn.onclick=function(){
+        var xhr=new XMLHttpRequest();
+        xhr.open('POST','/book',true);
+        xhr.responseType='json';
+        xhr.onload=function(){
+            layoutwindow.style.display='none';
+        };
+        xhr.send(serialize(myform));
+        bindHTML();
+    };
+    function serialize(form){
+        //将类数组转换成数组
+        var formAry=[].slice.call(form.elements);
+        var arr=[];
+        formAry.forEach(function(item){
+            if(item.type!='text')return;
+            arr.push(`${item.name}=${item.value}`);
+        });
+        return arr.join('&');
+    }
+    function getData(index){
+        layoutwindow2.style.display='block';
+        console.log(index,this);
+        var that=this;
+        var xhr=new XMLHttpRequest();
+        xhr.open('GET','/book?id='+index,true);
+        xhr.responseType='json';
+        xhr.onload=function(){
+            if(xhr.response.success=='done'){
+                if(xhr.response.data){
+                    bookid.value=xhr.response.data.id;
+                    bookname2.value=xhr.response.data.bookname;
+                    bookprice2.value=xhr.response.data.bookprice;
+                }
+            }
+        };
+        xhr.send();
+    }
+    function update(){
+        var that=this;
+        var xhr=new XMLHttpRequest();
+        xhr.open('PUT','/book',true);
+        xhr.responseType='json';
+        xhr.onload=function(){
+
+        };
+        console.log(serialize(myform2));
+        layoutwindow2.style.display='none';
+        xhr.send(serialize(myform2));
+        bindHTML();
+    }
+    function myremove(index){
+        var that=this;
+        console.log(this);
+        var xhr=new XMLHttpRequest();
+        xhr.open('DELETE','/book?id='+index,true);
+        xhr.responseType='json';
+        xhr.onload=function(){
+            if(xhr.response.success=='done'){
+                alert('删除成功！');
+                that.parentNode.parentNode.parentNode.removeChild(that.parentNode.parentNode);
+            }
+        };
+        xhr.send();
+    }
+</script>
+</body>
+</html>
