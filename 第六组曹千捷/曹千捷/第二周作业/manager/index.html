@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="bootstrap.css">
+</head>
+<body>
+<div class="container">
+    <h1 >welcome to bookStore ~ ~</h1>
+    <button class="btn btn-primary"  data-toggle="modal" data-target=".modal1">增加书籍</button>
+    <!--表单注册-->
+    <table class="table table-bordered" id="table">
+        <thead>
+        <tr  class="text-center">
+            <td>书名</td>
+            <td>价格</td>
+            <td>数量</td>
+            <td colspan="2">操作</td>
+        </tr>
+        </thead>
+        <tbody class="text-center" id="tbody">
+
+        </tbody>
+    </table>
+</div>
+<div class="modal1 modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title">新增书籍</h4>
+            </div>
+            <div class="modal-body" id="myform">
+                <label>书名:</label><input name="name" type="text">
+                <label>价格:</label><input name="price" type="text">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btn">确认</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<div class="modal2 modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title">修改书籍</h4>
+            </div>
+            <div class="modal-body" id="myform1">
+                <label>书名:</label><input name="name" type="text" id="inp1" num="">
+                <label>价格:</label><input name="price" type="text" id="inp2" num="">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btn1">确认修改</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<script src="jquery.min.js"></script>
+<script src="bootstrap.min.js"></script>
+<script>
+    function getData() {
+        $.ajax({
+            method:'GET',
+            type:'json',
+            url:'/book',
+            success:function (data) {
+                data = JSON.parse(data);
+                var str = '';
+                data.forEach(function (item,index) {
+                    str +=`
+                      <tr class="flag">
+                        <td>${item.name}</td>
+                        <td>${item.price}</td>
+                        <td>${item.count}</td>
+                        <td><button class="btn btn-danger pull-right"  onclick="remove.call(this,${item.id})">删除</button></td>
+                        <td> <button  num="${item.id}"  style="margin-right:10px;" data-target=".modal2" data-toggle="modal" class="btn btn-primary pull-right" onclick="modify(${item.id})">修改</button></td>
+                        </trname>`;
+                });
+                tbody.innerHTML = str;
+            }
+        });
+    }
+    getData();
+
+    function serialize(form) {
+        //获取表单内所有元素
+        //获取表单内所有元素；
+        //将类数组转换成数组
+        var formAry=[].slice.call(form.children);
+        var arr=[];
+        formAry.forEach(function (item) {
+            if(item.type!='text') return;
+            arr.push(`${item.name}=${item.value}`);
+        });
+        return arr.join('&');
+    }
+    btn.onclick = function () {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST','/book',true);
+        //指定响应类型
+        xhr.responseType='json';
+        xhr.onload = function () {
+            var data = xhr.response; //用户集合
+            var str = '';
+            data.forEach(function (item,index) {
+                str +=`
+                      <tr>
+                        <td>${item.name}</td>
+                        <td>${item.price}</td>
+                        <td>${item.count}</td>
+                        <td><button class="btn btn-danger pull-right" onclick="remove.call(this,${item.id})">删除</button></td>
+                        <td> <button style="margin-right:10px;" class="btn btn-primary pull-right" onclick="modify(${item.id})">修改</button></td>
+                        </tr>`;
+            });
+            tbody.innerHTML = str;
+        };
+        xhr.send(serialize(myform));
+        $('.modal1').modal('hide').on('hidden.bs.modal', function (e) {
+           $(myform.children).each(function (index, item) {
+               if(item.type!='text') return;
+              item.value='';
+           })
+        });
+    };
+    function remove(index) {
+        var flag = window.confirm('确定要删除吗？');
+        if(flag) {
+            var that = this;
+            var xhr = new XMLHttpRequest();
+            xhr.open('DELETE','/book?id='+index,true);
+            xhr.responseType='json';
+            xhr.onload = function () {
+                if(xhr.response.success=='done'){
+                    alert('删除成功');
+                    //后台删除成功后前台也要删掉
+                    that.parentNode.parentNode.parentNode.removeChild(that.parentNode.parentNode);
+                }
+            };
+            xhr.send();
+        }
+    }
+    function modify(index) {
+        $.ajax({
+            url:'/book?id='+index,
+            method:'GET',
+            type:'json',
+            success:function (data) {
+                console.log(data);
+                data = JSON.parse(data);
+                inp1.value = data[0].name;
+                inp2.value = data[0].price;
+                $('#btn1').attr('num',data[0].id);
+            }
+        })
+    }
+    btn1.onclick = function (e) {
+            var index = $(this).attr('num');
+        console.log(index);
+            var xhr = new XMLHttpRequest();
+            xhr.open('PUT','/book?id='+index,true);
+            xhr.responseType='json';
+            xhr.onload = function () {
+                if(xhr.response.msg=='success'){
+                    $('.modal2').modal('hide').on('hidden.bs.modal',function () {
+                        window.alert('修改成功');
+                        getData();
+                    });
+                }
+            };
+            xhr.send(serialize(myform1));
+    }
+</script>
+</body>
+</html>
