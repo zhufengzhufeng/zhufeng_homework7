@@ -73,7 +73,7 @@
                 var str = '';
                 data.forEach(function (item,index) {
                     str +=`
-                      <tr class="flag">
+                      <tr>
                         <td>${item.name}</td>
                         <td>${item.price}</td>
                         <td>${item.count}</td>
@@ -106,21 +106,12 @@
         xhr.responseType='json';
         xhr.onload = function () {
             var data = xhr.response; //用户集合
-            var str = '';
-            data.forEach(function (item,index) {
-                str +=`
-                      <tr>
-                        <td>${item.name}</td>
-                        <td>${item.price}</td>
-                        <td>${item.count}</td>
-                        <td><button class="btn btn-danger pull-right" onclick="remove.call(this,${item.id})">删除</button></td>
-                        <td> <button style="margin-right:10px;" class="btn btn-primary pull-right" onclick="modify(${item.id})">修改</button></td>
-                        </tr>`;
-            });
-            tbody.innerHTML = str;
+            if(data.success == 'done') {
+             getData();
+            }
         };
         xhr.send(serialize(myform));
-        $('.modal1').modal('hide').on('hidden.bs.modal', function (e) {
+        $('.modal1').modal('hide').on('hidden.bs.modal', function () {
            $(myform.children).each(function (index, item) {
                if(item.type!='text') return;
               item.value='';
@@ -158,21 +149,23 @@
             }
         })
     }
-    btn1.onclick = function (e) {
+    btn1.onclick = function () {
             var index = $(this).attr('num');
-        console.log(index);
+            console.log(index);
             var xhr = new XMLHttpRequest();
             xhr.open('PUT','/book?id='+index,true);
             xhr.responseType='json';
             xhr.onload = function () {
                 if(xhr.response.msg=='success'){
-                    $('.modal2').modal('hide').on('hidden.bs.modal',function () {
+
                         window.alert('修改成功');
-                        getData();
-                    });
+                        $('#btn1').attr('num','');
+
+                    getData();
                 }
             };
             xhr.send(serialize(myform1));
+        $('.modal2').modal('hide');
     }
 </script>
 </body>

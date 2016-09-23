@@ -65,7 +65,7 @@ var app = http.createServer(function (req,res) {
                     obj.count = Math.round(Math.random()*10);
                     books.push(obj);
                     //注册成功后将所有用户返回给客户端
-                    res.end(JSON.stringify(books));
+                    res.end(JSON.stringify({success:'done'}));
                 });
                 break;
             case 'DELETE':
