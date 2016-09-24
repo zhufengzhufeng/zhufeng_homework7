@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html ng-app="appModule">
+<head>
+    <meta charset="UTF-8">
+    <title>书店管理</title>
+    <link rel="stylesheet" href="bootstrap.css">
+</head>
+<body ng-controller="carCtrl">
+    <ul class="list-group">
+        <li class="list-group-item">根据id查询 <input type="text" ng-model="query" ng-model-options="{debounce:1000}"></li>
+        <li class="list-group-item">书的名字 {{book.name}}</li>
+        <li class="list-group-item">书的价格 {{book.id}}</li>
+        <li class="list-group-item"> <button type="button" class="btn btn-info" data-toggle="modal" data-target="#addModal" >添加书籍</button></li>
+    </ul>
+
+    <table class="table table-bordered"  >
+        <tr>
+            <td>书的名字</td>
+            <td>书的价格</td>
+            <td>书的数量</td>
+            <td>小计</td>
+            <td colspan="2" >操作</td>
+        </tr>
+        <tr ng-repeat="book in books track by $index">
+            <td>{{book.name}}</td>
+            <td>{{book.price}}</td>
+            <td>{{book.count}}</td>
+            <td>{{book.count* book.price}}</td>
+            <td><button class="btn btn-danger" ng-click="dell( book)">删除</button></td>
+            <td>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#updateModal" ng-click="oneBook(book)">
+                修改</button></td>
+        </tr>
+    </table>
+
+<div class="modal fade" id="updateModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title">修改图书</h4>
+            </div>
+            <div class="modal-body">
+                图书的名字 <input type="text" ng-model="b.name">
+                图书的价格 <input type="text" ng-model="b.price">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="updatt(b)">Save changes</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="modal fade" id="addModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title">添加图书</h4>
+            </div>
+            <div class="modal-body list-group">
+                图书的名字 <input type="text" class="list-group-item" ng-model="b.name">
+
+                图书的价格 <input type="text" class="list-group-item" ng-model="b.price">
+
+                图书的数量 <input type="text" class="list-group-item" ng-model="b.count">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="addd(b)">Save changes</button>
+            </div>
+        </div><!-- /.modal1-content -->
+    </div><!-- /.modal1-dialog -->
+</div><!-- /.modal1 -->
+
+</body>
+</html>
+<script src="angular.js"></script>
+<script src="angular-resource.js"></script>
+<script src="jquery.js"></script>
+<script src="bootstrap.js"></script>
+<script>
+    var app  = angular.module('appModule',['ngResource']);
+    app.factory('book', function ($resource) {
+//        console.log($resource);
+        return $resource('/book/:id',null,{
+            update:{
+                method: 'PUT'
+            }
+        })
+    });
+
+    app.controller('carCtrl',function ($scope,$http,book) {
+//        console.log(book);
+        $scope.books = book.query();  //会默认发送get请求后面没有id
+        $scope.book = {};
+        $scope.$watch('query', function (newVal,oldVal) {
+            // query 变化后，根据变换的值查询对应的数据，
+            if(newVal){
+//                console.log(newVal);
+                $scope.book = book.get({id:newVal});
+            }
+
+        });
+        $scope.dell = function (b) {
+//            book.delete(b); //删除某一个需要传入id,他会自动寻找那一项拼在/book/id
+            book.delete(b).$promise.then(function () {
+                $scope.books = book.query();
+            });
+        }
+
+        $scope.oneBook= function (b) {
+            $scope.b = JSON.parse(JSON.stringify(b));//将b的对象克隆出一份
+        }
+
+        $scope.updatt = function (b) {
+            //通过id修改内容，b 放到请求体中
+            book.update({id:b.id},b).$promise.then(function (data) {
+                // 将所有书的id拿到进行和后台响应的id比较如果相等，则用最新的覆盖旧的，
+                $scope.books = $scope.books.map(function (item) {
+                    if(item.id == data.id){
+                        return data;
+                    }
+                    return item;
+                });
+                // 修改后将模态框隐藏
+                $('#updateModal').modal('hide');
+            }); //angular中修改必须手动传入id，告诉服务端，通过id进行查询
+
+        }
+        
+        $scope.addd = function (b) {
+            book.save({},b).$promise.then(function (data) {
+                console.log(data);
+                $scope.books.push(data);
+                $('#addModal').modal('hide');
+            });
+        }
+
+
+    });
+
+
+    /*
+    $http.get('/book').success(function (data) {  //[promise 对象
+     $scope.books = data;
+     });
+     */
+    // RESTful通过方法名发送不同的请求并且路径相同
+</script>
